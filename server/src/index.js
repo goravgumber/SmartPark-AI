@@ -39,7 +39,7 @@ app.use(
 )
 app.use(
   cors({
-    origin: config.frontendUrl,
+    origin: process.env.FRONTEND_URL || config.frontendUrl,
     credentials: true
   })
 )
