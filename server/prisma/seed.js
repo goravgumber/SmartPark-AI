@@ -17,14 +17,13 @@ function getVehicleNumber(index) {
 }
 
 async function main() {
-  console.log('✅ Resetting existing data...')
-  await prisma.reservation.deleteMany()
-  await prisma.parkingSlot.deleteMany()
-  await prisma.zone.deleteMany()
-  await prisma.device.deleteMany()
-  await prisma.alert.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.facility.deleteMany()
+  const existingUsers = await prisma.user.count()
+  if (existingUsers > 0) {
+    console.log('✅ Database already seeded. Skipping seed.')
+    return
+  }
+
+  console.log('🌱 Seeding database...')
 
   console.log('✅ Creating users...')
   const hashedPassword = await bcrypt.hash('Admin@123', 10)
@@ -321,6 +320,10 @@ async function main() {
 
 main()
   .catch((error) => {
+    if (error?.code === 'P1010') {
+      console.error('❌ Seed failed: Database access denied for current user (P1010).')
+      process.exit(1)
+    }
     console.error('❌ Seed failed:', error)
     process.exit(1)
   })
