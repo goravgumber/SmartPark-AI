@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Play, Square } from 'lucide-react'
 import { socket } from '../lib/socket'
+import { api } from '../services/api'
 import ToastContainer from './ui/ToastContainer'
 
 const speedOptions = [
@@ -8,10 +9,6 @@ const speedOptions = [
   { label: 'Medium (5s)', value: 5 },
   { label: 'Fast (2s)', value: 2 }
 ]
-
-function getApiBase() {
-  return import.meta.env.VITE_API_URL || '/api'
-}
 
 export default function SimulationPanel({ facilityId }) {
   const [intervalSeconds, setIntervalSeconds] = useState(5)
@@ -24,21 +21,12 @@ export default function SimulationPanel({ facilityId }) {
   const addToast = (toast) => setToasts((prev) => [...prev, { ...toast, id: crypto.randomUUID() }])
 
   async function request(path, method = 'GET', body) {
-    const token = localStorage.getItem('smartpark_token')
-    const response = await fetch(`${getApiBase()}${path}`, {
+    const response = await api.request({
+      url: path,
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: body ? JSON.stringify(body) : undefined
+      data: body
     })
-
-    const payload = await response.json()
-    if (!response.ok) {
-      throw new Error(payload?.error || 'Simulation request failed.')
-    }
-    return payload.data
+    return response.data?.data
   }
 
   async function refreshStatus() {

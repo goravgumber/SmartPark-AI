@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../db.js'
-import { authMiddleware, requireRoles } from '../middleware/auth.js'
+import { authMiddleware } from '../middleware/auth.js'
 import { validateBody } from '../middleware/validate.js'
 import { getIO } from '../socket.js'
 
@@ -155,7 +155,7 @@ function stopSimulationInterval() {
   state.isTicking = false
 }
 
-router.post('/start', authMiddleware, requireRoles('OWNER', 'ADMIN'), validateBody(startSchema), async (req, res, next) => {
+router.post('/start', authMiddleware, validateBody(startSchema), async (req, res, next) => {
   try {
     const { facilityId, intervalSeconds } = req.body
 
@@ -192,7 +192,7 @@ router.post('/start', authMiddleware, requireRoles('OWNER', 'ADMIN'), validateBo
   }
 })
 
-router.post('/stop', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req, res, next) => {
+router.post('/stop', authMiddleware, async (req, res, next) => {
   try {
     if (state.isRunning) {
       stopSimulationInterval()
@@ -209,7 +209,7 @@ router.post('/stop', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req,
   }
 })
 
-router.post('/pi-payload', authMiddleware, requireRoles('OWNER', 'ADMIN'), validateBody(piPayloadSchema), async (req, res, next) => {
+router.post('/pi-payload', authMiddleware, validateBody(piPayloadSchema), async (req, res, next) => {
   try {
     const { parking_id: facilityId, device_id: deviceId, slots, device_health: deviceHealth } = req.body
 
@@ -296,7 +296,7 @@ router.post('/pi-payload', authMiddleware, requireRoles('OWNER', 'ADMIN'), valid
   }
 })
 
-router.get('/status', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req, res, next) => {
+router.get('/status', authMiddleware, async (req, res, next) => {
   try {
     res.json({
       success: true,

@@ -20,7 +20,7 @@ import {
   YAxis
 } from 'recharts'
 import { Activity, Clock3, IndianRupee, Receipt } from 'lucide-react'
-import { api } from '../lib/api'
+import { api } from '../services/api'
 import ProgressRing from '../components/ui/ProgressRing'
 import StatCard from '../components/ui/StatCard'
 

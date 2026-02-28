@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../store/auth'
-import { api } from '../../lib/api'
+import { api } from '../../services/api'
 
 export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggle, recentAlerts = [] }) {
   const navigate = useNavigate()

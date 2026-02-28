@@ -15,7 +15,7 @@ import {
   YAxis
 } from 'recharts'
 import ToastContainer from '../components/ui/ToastContainer'
-import { api } from '../lib/api'
+import { api } from '../services/api'
 
 function fmtINR(value) {
   return `₹${Number(value || 0).toLocaleString('en-IN')}`

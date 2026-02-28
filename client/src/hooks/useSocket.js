@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { joinFacility, socket } from '../lib/socket'
+import { connectSocket, joinFacility, socket } from '../lib/socket'
 
 export default function useSocket(facilityId) {
   const [isConnected, setIsConnected] = useState(socket.connected)
   const [lastEvent, setLastEvent] = useState(null)
 
   useEffect(() => {
+    connectSocket()
+
     function onConnect() {
       setIsConnected(true)
       if (facilityId) joinFacility(facilityId)

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import ToastContainer from '../components/ui/ToastContainer'
-import { api } from '../lib/api'
+import { api } from '../services/api'
 
 const tabs = ['Devices', 'Parking Config', 'Users', 'System Health', 'Settings']
 

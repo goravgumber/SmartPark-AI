@@ -1,84 +1,95 @@
-# SmartPark AI: AMD-Aligned Architecture
+# AMD Architecture Alignment — SmartPark AI
 
-## 1) AMD Architecture Mapping
+## Objective
 
-- Backend APIs + Socket.IO gateway: AMD EPYC cloud compute for high-concurrency request and realtime event workloads.
-- PostgreSQL analytics + transactional reservations: AMD EPYC DB infrastructure for parallel query execution and sustained throughput.
-- Facility edge runtime: AMD Ryzen mini server for local MQTT processing, buffering, and secure upstream forwarding.
-- AI inference service (next phase): AMD Instinct GPU with ROCm for occupancy forecasting, anomaly detection, and traffic optimization.
-- Smart IoT controller tier: AMD Adaptive SoC-based edge devices for local signal pre-processing.
+Position SmartPark AI as an AMD-aligned edge-to-cloud smart city platform that runs as a prototype now and scales cleanly to production.
 
-## 2) Text Architecture Diagram
+## 1. AMD Architecture Mapping
 
-```text
-IoT Sensors / Cameras
-        |
-        v
-AMD Adaptive SoC Device Layer
-(edge pre-processing)
-        |
-        v
-AMD Ryzen Edge Node (per facility)
-(MQTT normalize, local buffering, retry)
-        |
-        v
-Secure Uplink (TLS MQTT / HTTPS)
-        |
-        v
-AMD EPYC Cloud Backend
-(Express APIs, Socket.IO, RBAC, booking engine)
-        |
-        +--> PostgreSQL + Prisma (EPYC-backed)
-        |
-        +--> AI Inference Service (AMD Instinct + ROCm)
-                  |
-                  v
-            predictions + optimization signals
-        |
-        v
-Realtime React Dashboard
+| SmartPark Component | AMD Technology | Practical Role |
+|---|---|---|
+| Express API + Socket.IO gateway | AMD EPYC | High-core backend concurrency for API + websocket fan-out |
+| PostgreSQL + Prisma workloads | AMD EPYC | Parallel transactional + analytical query execution |
+| Facility edge gateway | AMD Ryzen | On-site MQTT processing, local buffering, and uplink retries |
+| AI inference microservice (next phase) | AMD Instinct GPUs | Fast occupancy and demand inference workloads |
+| ML runtime | ROCm ecosystem | Open AI stack for model serving/training on AMD GPUs |
+| Device/control tier model | AMD Adaptive SoCs | Edge signal pre-processing and control-plane readiness |
+
+## 2. Edge -> Cloud -> AI Pipeline
+
+```mermaid
+flowchart TD
+  IOT[Parking Sensors / Cameras / Gate Controllers]
+  EDGE[AMD Ryzen Edge Node<br/>MQTT normalize + local cache]
+  CLOUD[AMD EPYC Cloud<br/>Express + Prisma + Socket.IO]
+  DB[(PostgreSQL)]
+  AI[AMD Instinct + ROCm<br/>Inference Service]
+  UI[Realtime Dashboard]
+
+  IOT --> EDGE
+  EDGE --> CLOUD
+  CLOUD --> DB
+  DB --> AI
+  AI --> CLOUD
+  CLOUD --> UI
 ```
 
-## 3) Performance Advantages (No Fake Benchmarks)
+## 3. Why AMD Is Technically Beneficial
 
-- WebSocket concurrency: EPYC core density supports parallel Node workers and socket event fanout under burst traffic.
-- PostgreSQL analytics: EPYC memory bandwidth and CPU parallelism support mixed transactional and analytical loads.
-- MQTT ingestion: Ryzen edge handles local stream processing while EPYC backend parallelizes validation and persistence.
-- Realtime dashboard UX: lower event and query latency under concurrent users.
-- Parallel booking requests: stronger multi-core processing for reservation conflict checks and transaction retries.
+### Backend and Realtime (EPYC)
 
-## 4) Hackathon Judge Pitch
+- Socket-heavy workloads benefit from many CPU cores for process-level parallelism.
+- Mixed API and websocket traffic can be isolated across workers while keeping low latency.
+- Reservation and analytics endpoints can run concurrently with reduced contention.
 
-### Three quick points
-- SmartPark AI uses AMD edge-to-cloud topology: Ryzen at facilities, EPYC in cloud, Instinct for AI inference.
-- Realtime data path is production-shaped: MQTT -> secure backend -> Socket.IO live dashboard.
-- AI-ready design: ROCm inference service can plug in without redesigning the core app.
+### Edge Processing (Ryzen)
 
-### 30-second explanation
-SmartPark AI is designed around AMD's full stack. At parking facilities, Ryzen edge nodes collect and normalize sensor data. In cloud, EPYC powers our APIs, reservation engine, and realtime websocket distribution. For next-stage intelligence, Instinct GPUs with ROCm run occupancy and demand inference. So this is not only a frontend demo; it is an AMD-aligned smart-city architecture with a practical production path.
+- Facility-level preprocessing reduces cloud roundtrips for noisy telemetry.
+- Supports lightweight inference or rule evaluation before publishing to cloud.
+- Useful for intermittent connectivity with local queue + replay patterns.
 
-### 2-minute technical explanation
-We split SmartPark AI into edge, cloud, and AI planes. Edge facilities run a Ryzen node that ingests local telemetry via MQTT, performs sanity checks, and buffers data during uplink interruptions. This keeps on-site reliability high.
+### AI Acceleration (Instinct + ROCm)
 
-In cloud, EPYC-backed services run Express APIs, Socket.IO fanout, and reservation workflows. The same backend handles realtime updates and analytical endpoints, while PostgreSQL serves transactional and aggregated workloads in parallel.
+- Predictive services (occupancy forecasting, anomaly scoring) can run on dedicated GPU tier.
+- ROCm enables standard PyTorch-based workflows with AMD acceleration.
+- Keeps inference decoupled from transactional backend for stable API latency.
 
-For AI extension, we introduce a separate inference microservice on AMD Instinct + ROCm. It consumes historical reservations and live occupancy streams to output short-term demand forecasts, anomaly alerts, and zone-level optimization signals. Those predictions are then exposed through API and pushed into the dashboard over existing websocket channels.
+## 4. Smart City Deployment Model
 
-This gives SmartPark AI a realistic path from prototype to scalable smart-city operations while staying consistent with AMD's compute, edge, and AI ecosystem.
+```mermaid
+flowchart LR
+  subgraph FacilityA[Facility A]
+    A1[Sensors]
+    A2[Ryzen Edge Node]
+    A1 --> A2
+  end
 
-## 5) Section-5 AI Extension Plan (Instinct + ROCm)
+  subgraph FacilityB[Facility B]
+    B1[Sensors]
+    B2[Ryzen Edge Node]
+    B1 --> B2
+  end
 
-- Add `ai-service` (Python FastAPI + ROCm-compatible inference runtime).
-- Inputs: reservation history, hourly occupancy, event streams, temporal features.
-- Outputs:
-  - occupancy prediction (1-6 hour horizon),
-  - zone congestion risk,
-  - anomaly score for device/sensor drift.
-- Integration:
-  - backend polls/publishes predictions,
-  - emits `prediction:updated` over Socket.IO,
-  - dashboard overlays map and analytics panels.
-- Operational path:
-  - offline batch retraining,
-  - online inference serving,
-  - model versioning and drift monitoring.
+  A2 --> C[EPYC Regional Cloud Cluster]
+  B2 --> C
+  C --> D[(PostgreSQL + Data Lake)]
+  C --> E[Instinct GPU Inference Pool]
+  E --> C
+  C --> F[Ops Dashboard + Mobile Apps]
+```
+
+## 5. Implementation Path for SmartPark AI
+
+1. **Current prototype**: Render deployment, realtime dashboard, simulation routes.
+2. **Edge enablement**: deploy MQTT forwarder and payload signer on Ryzen edge node.
+3. **AI service split**: add FastAPI inference service on ROCm-compatible AMD GPU nodes.
+4. **Scale-out**: add Redis adapter for Socket.IO and queue-based ingestion workers.
+5. **City rollout**: multi-facility tenancy with regional EPYC clusters and centralized monitoring.
+
+## 6. Hackathon Positioning Summary
+
+SmartPark AI already demonstrates the software pipeline expected in a production smart-city platform. The AMD mapping provides a realistic hardware evolution path:
+
+- Ryzen at edge for resilience and reduced latency,
+- EPYC in cloud for scalable backend and data plane,
+- Instinct + ROCm for AI-powered optimization.

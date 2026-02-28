@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts'
-import { api } from '../lib/api'
+import { api } from '../services/api'
 import ProgressRing from '../components/ui/ProgressRing'
 import ToastContainer from '../components/ui/ToastContainer'
 

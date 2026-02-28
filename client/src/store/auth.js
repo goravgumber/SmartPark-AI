@@ -1,5 +1,6 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
-import { api, publicApi } from '../lib/api'
+import { api, publicApi } from '../services/api'
+import { connectSocket, disconnectSocket, syncSocketAuth } from '../lib/socket'
 
 const AuthContext = createContext(null)
 
@@ -44,6 +45,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem('smartpark_token')
     localStorage.removeItem('smartpark_user')
+    syncSocketAuth()
+    disconnectSocket()
     dispatch({ type: 'LOGOUT' })
   }, [])
 
@@ -54,6 +57,7 @@ export function AuthProvider({ children }) {
       const payload = response.data.data
       localStorage.setItem('smartpark_token', payload.token)
       localStorage.setItem('smartpark_user', JSON.stringify(payload.user))
+      connectSocket()
 
       dispatch({ type: 'LOGIN', payload })
       return payload
@@ -75,6 +79,7 @@ export function AuthProvider({ children }) {
       const response = await api.get('/auth/me')
       const user = response.data.data
       localStorage.setItem('smartpark_user', JSON.stringify(user))
+      connectSocket()
       dispatch({ type: 'LOGIN', payload: { user, token } })
     } catch (_error) {
       logout()

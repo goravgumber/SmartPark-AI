@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUp, Mic, MicOff, X } from 'lucide-react'
-import { api } from '../../lib/api'
+import { api } from '../../services/api'
 
 const quickCommands = {
   hi: ['पार्किंग उपलब्ध है?', 'स्लॉट बुक करो', 'कितनी जगह है?'],

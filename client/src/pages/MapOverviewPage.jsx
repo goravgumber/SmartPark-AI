@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, RefreshCw } from 'lucide-react'
-import { api } from '../lib/api'
+import { api } from '../services/api'
 import useSocket from '../hooks/useSocket'
 import ToastContainer from '../components/ui/ToastContainer'
 import SimulationPanel from '../components/SimulationPanel'
