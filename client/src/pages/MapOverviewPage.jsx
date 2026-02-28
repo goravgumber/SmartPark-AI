@@ -3,6 +3,7 @@ import { Loader2, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api'
 import useSocket from '../hooks/useSocket'
 import ToastContainer from '../components/ui/ToastContainer'
+import SimulationPanel from '../components/SimulationPanel'
 
 const zoneTabs = [
   { id: 'ALL', label: 'All' },
@@ -434,8 +435,11 @@ export default function MapOverviewPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <div className="z-20 lg:absolute lg:right-0 lg:top-0">
+        <SimulationPanel facilityId={facilityId} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {statCard('Total Slots', summary.total, 'text-white', '↔')}

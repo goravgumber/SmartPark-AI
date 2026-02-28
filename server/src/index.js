@@ -13,15 +13,14 @@ import analyticsRoutes from './routes/analytics.js'
 import alertRoutes from './routes/alerts.js'
 import deviceRoutes from './routes/devices.js'
 import voiceRoutes from './routes/voice.js'
+import simulationRoutes from './routes/simulation.js'
 import { setIO } from './socket.js'
 import { generalRateLimit } from './middleware/rateLimiter.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { prisma } from './db.js'
 
 const app = express()
-if (config.trustProxy) {
-  app.set('trust proxy', 1)
-}
+app.set('trust proxy', 1)
 
 const httpServer = http.createServer(app)
 
@@ -62,6 +61,7 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/alerts', alertRoutes)
 app.use('/api/devices', deviceRoutes)
 app.use('/api/voice', voiceRoutes)
+app.use('/api/simulation', simulationRoutes)
 
 io.use((socket, next) => {
   try {

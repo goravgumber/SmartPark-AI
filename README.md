@@ -1,88 +1,184 @@
 # SmartPark AI
 
-SmartPark AI hackathon prototype monorepo.
+SmartPark AI is a full-stack realtime smart-city parking platform built for hackathon demo and production evolution.
 
-## Apps
-- `server/`: Express + Prisma + PostgreSQL + Socket.IO backend
-- `client/`: React + Vite + Tailwind frontend
+- Live Demo: `https://your-live-demo-url`
+- GitHub Repo: `https://github.com/your-org/smartpark-ai`
 
-## Quick start
+## What It Does
 
-### Backend
+SmartPark AI provides a live parking command center with:
+- realtime slot map updates,
+- reservation workflows with pricing,
+- analytics and environmental dashboards,
+- IoT simulation pipeline (MQTT and Raspberry Pi payload simulation),
+- role-based secured backend APIs.
+
+## Core Features
+
+- Realtime Parking Operations
+  - 120-slot live grid with Socket.IO updates
+  - occupancy summary and zone filtering
+  - slot reservation modal with pricing breakdown
+
+- Reservation Engine
+  - role-aware APIs (DRIVER / OWNER / ADMIN)
+  - status lifecycle (UPCOMING, ACTIVE, COMPLETED, CANCELLED)
+  - conflict checks and transaction-safe updates
+
+- Analytics + Environmental Intelligence
+  - occupancy trend charts
+  - revenue trend and top-slot insights
+  - fuel / CO2 / time savings dashboards
+
+- Voice Assistant
+  - bilingual quick queries (Hindi / English)
+  - API-backed intent responses
+
+- Raspberry Pi Simulation (Section 6)
+  - start/stop simulator from UI
+  - randomized slot updates
+  - device payload ingestion endpoint
+  - live occupancy event emissions
+
+## AMD Technology Integration
+
+SmartPark AI follows an AMD-aligned edge-to-cloud design:
+- AMD EPYC: cloud API and PostgreSQL workloads
+- AMD Ryzen: facility edge gateway simulation
+- AMD Instinct + ROCm: AI inference extension path
+- AMD Adaptive SoCs: IoT controller tier concept
+
+See full mapping and pitch content in [docs/AMD_ARCHITECTURE.md](docs/AMD_ARCHITECTURE.md).
+
+## Architecture (Mermaid)
+
+```mermaid
+flowchart TD
+  A[IoT Sensors / Cameras / Gates] --> B[AMD Adaptive SoC Device Layer]
+  B --> C[AMD Ryzen Edge Node]
+  C --> D[MQTT/HTTPS Secure Uplink]
+  D --> E[SmartPark Backend API\nNode.js + Express + Socket.IO]
+  E --> F[(PostgreSQL + Prisma)]
+  E --> G[Realtime Events]
+  G --> H[React Dashboard]
+  E --> I[Simulation Routes\nstart/stop/pi-payload/status]
+  E --> J[AI Service (Future)\nAMD Instinct + ROCm]
+```
+
+## Tech Stack
+
+- Backend: Node.js, Express.js
+- Database: PostgreSQL, Prisma
+- Frontend: React, Vite, Tailwind CSS
+- Realtime: Socket.IO
+- IoT Simulation: MQTT (Mosquitto)
+- Security: JWT, RBAC, rate limiting, validation middleware
+- Deployment: Render.com
+
+## Project Structure
+
+```text
+SmartPark-AI/
+├── server/
+├── client/
+├── docs/
+├── render.yaml
+└── README.md
+```
+
+## Local Setup
+
+### 1) Clone and install
+
+```bash
+git clone https://github.com/your-org/smartpark-ai.git
+cd smartpark-ai
+```
+
+### 2) Backend setup
+
 ```bash
 cd server
 cp .env.example .env
 npm install
 npx prisma generate
-npm run db:push
+npx prisma db push
 npm run db:seed
 npm run dev
 ```
 
-### Frontend
+Backend runs on `http://localhost:4000`.
+
+### 3) Frontend setup
+
 ```bash
-cd client
+cd ../client
 npm install
 npm run dev
 ```
 
-## AMD Technology Integration
+Frontend runs on `http://localhost:3000`.
 
-SmartPark AI is aligned to AMD's edge-to-cloud architecture for realistic smart-city deployment.
+## Render Deployment (Production-Safe)
 
-### Cloud Compute (AMD EPYC)
-- Backend APIs (Express), Socket.IO realtime gateway, and PostgreSQL are mapped to AMD EPYC cloud instances.
-- EPYC high core density supports parallel API requests, websocket fanout, and analytics reads/writes.
+This repo includes [render.yaml](render.yaml) for Blueprint deploy.
 
-### Edge Deployment (AMD Ryzen)
-- Each facility can run an AMD Ryzen mini edge node for local MQTT aggregation, buffering, and secure uplink.
-- This reduces dependency on always-on internet and improves realtime continuity at site level.
+### Steps
 
-### AI Acceleration (AMD Instinct + ROCm)
-- Forecasting/anomaly inference can run as a separate service on AMD Instinct GPUs.
-- ROCm-based inference APIs can feed demand prediction and optimization signals back into the dashboard.
+1. Push code to GitHub.
+2. In Render: `New` -> `Blueprint`.
+3. Select repository and apply `render.yaml`.
+4. Verify env vars:
+   - `DATABASE_URL`
+   - `JWT_SECRET`
+   - `JWT_EXPIRES_IN`
+   - `FRONTEND_URL`
+   - `DEVICE_API_KEY`
+   - `TRUST_PROXY=true`
+5. Deploy services:
+   - `smartpark-server` (Web Service)
+   - `smartpark-client` (Static Site)
+   - `smartpark-db` (PostgreSQL)
 
-### IoT Device Layer (AMD Adaptive SoCs)
-- Smart controllers can use Adaptive SoCs for on-device signal pre-processing before cloud ingestion.
-- This supports low-latency edge intelligence and lower raw data transfer cost.
+## Demo Credentials
 
-### Updated Architecture Flow
+- Admin: `admin@smartpark.ai` / `Admin@123`
+- Owner: `owner@smartpark.ai` / `Admin@123`
+- Driver: `driver@smartpark.ai` / `Admin@123`
 
-```text
-Parking Sensors / Cameras / Gates
-        |
-        v
-[AMD Adaptive SoC Device Layer]
-        |
-        v
-[AMD Ryzen Edge Node @ Facility]
-- MQTT normalize + forward
-- local buffering/retry
-        |
-        v
-TLS MQTT/HTTPS Uplink
-        |
-        v
-[AMD EPYC Cloud Cluster]
-- Express APIs
-- Socket.IO realtime gateway
-- reservation engine + RBAC
-        |
-        +--> [PostgreSQL on AMD EPYC]
-        |
-        +--> [AI Inference Service on AMD Instinct + ROCm]
-                  |
-                  v
-          demand forecasts / anomaly signals
-        |
-        v
-React Dashboard (Map, Analytics, Environment)
-```
+## Hackathon Judge Walkthrough (Suggested)
 
-### Why AMD Fit Matters
-- WebSocket concurrency: more worker/process parallelism on EPYC.
-- PostgreSQL analytics: better mixed OLTP + aggregation headroom.
-- MQTT ingestion: Ryzen edge buffering plus EPYC parallel consumers.
-- Realtime dashboard performance: low-latency fanout + query throughput.
+1. Login as Admin.
+2. Open **Map Overview** and show live slot states.
+3. Start **Raspberry Pi Simulator** panel and show live updates.
+4. Reserve a slot and show instant state change.
+5. Open **Analytics** and **Revenue** dashboards.
+6. Open **Environment** page for impact storytelling.
+7. Use **Voice Assistant** with English/Hindi query.
+8. Show **AMD architecture mapping** from docs.
 
-For detailed pitch-ready content, see [AMD Architecture Guide](docs/AMD_ARCHITECTURE.md).
+## API Highlights
+
+- Auth: `/api/auth/*`
+- Parking: `/api/parking/*`
+- Reservations: `/api/reservations/*`
+- Analytics: `/api/analytics/*`
+- Alerts: `/api/alerts/*`
+- Devices: `/api/devices/*`
+- Voice: `/api/voice/query`
+- Simulation: `/api/simulation/start|stop|status|pi-payload`
+
+## Section Progress Tracker
+
+- [x] Section 1 — Setup + DB + seed data
+- [x] Section 2 — Backend APIs
+- [x] Section 3 — Login + Dashboard shell
+- [x] Section 4 — Map + Analytics + Environment
+- [x] Section 5 — Security hardening + AMD alignment
+- [x] Section 6 — Raspberry Pi simulation + deployment readiness
+
+## Notes
+
+- This implementation is hackathon-optimized while preserving production-safe patterns.
+- For higher-scale production, add Redis adapter for Socket.IO and distributed cache/rate limits.
