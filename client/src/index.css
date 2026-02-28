@@ -50,4 +50,13 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  .panel-frame {
+    @apply glass-card rounded-2xl border border-brand-cyan/20 p-6;
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+  }
+
+  .page-title {
+    @apply font-orbitron text-3xl text-brand-cyan;
+  }
 }
