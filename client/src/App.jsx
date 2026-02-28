@@ -1,10 +1,17 @@
+import { Suspense, lazy } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/auth'
-import LoginPage from './pages/LoginPage'
-import AppShell from './components/layout/AppShell'
-import MapOverviewPage from './pages/MapOverviewPage'
-import AnalyticsPage from './pages/AnalyticsPage'
-import EnvironmentPage from './pages/EnvironmentPage'
+
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const AppShell = lazy(() => import('./components/layout/AppShell'))
+const MapOverviewPage = lazy(() => import('./pages/MapOverviewPage'))
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const EnvironmentPage = lazy(() => import('./pages/EnvironmentPage'))
+const RevenuePage = lazy(() => import('./pages/RevenuePage'))
+const AIPredictionsPage = lazy(() => import('./pages/AIPredictionsPage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const AlertsPage = lazy(() => import('./pages/AlertsPage'))
+const ReservationsPage = lazy(() => import('./pages/ReservationsPage'))
 
 function ProtectedRoute() {
   const token = localStorage.getItem('smartpark_token')
@@ -30,10 +37,10 @@ function HomeRedirect() {
   return <Navigate to={token ? '/dashboard/map' : '/login'} replace />
 }
 
-function PlaceholderPage({ title }) {
+function RouteLoading() {
   return (
-    <div className="panel-frame flex min-h-[72vh] items-center justify-center">
-      <h2 className="page-title">{title}</h2>
+    <div className="flex min-h-screen items-center justify-center bg-dark-base">
+      <div className="glass-card px-6 py-4 font-mono text-brand-cyan">Loading module...</div>
     </div>
   )
 }
@@ -41,26 +48,28 @@ function PlaceholderPage({ title }) {
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/" element={<HomeRedirect />} />
-        <Route path="/login" element={<LoginPage />} />
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<AppShell />}>
-            <Route index element={<Navigate to="map" replace />} />
-            <Route path="map" element={<MapOverviewPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="environment" element={<EnvironmentPage />} />
-            <Route path="reservations" element={<PlaceholderPage title="Reservations" />} />
-            <Route path="revenue" element={<PlaceholderPage title="Revenue" />} />
-            <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
-            <Route path="ai" element={<PlaceholderPage title="AI Predictions" />} />
-            <Route path="admin" element={<PlaceholderPage title="Admin Panel" />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<AppShell />}>
+              <Route index element={<Navigate to="map" replace />} />
+              <Route path="map" element={<MapOverviewPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="environment" element={<EnvironmentPage />} />
+              <Route path="reservations" element={<ReservationsPage />} />
+              <Route path="revenue" element={<RevenuePage />} />
+              <Route path="alerts" element={<AlertsPage />} />
+              <Route path="ai" element={<AIPredictionsPage />} />
+              <Route path="admin" element={<AdminPage />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </AuthProvider>
   )
 }

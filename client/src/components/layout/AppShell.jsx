@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import VoiceAssistant from '../voice/VoiceAssistant'
 
 const titleMap = {
   '/dashboard/map': 'Map Overview',
@@ -51,6 +52,7 @@ export default function AppShell() {
           </main>
         </div>
       </div>
+      <VoiceAssistant />
     </div>
   )
 }
