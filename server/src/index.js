@@ -4,12 +4,14 @@ import express from 'express'
 import http from 'http'
 import { Server } from 'socket.io'
 import { config } from './config.js'
-import authRoutes from './routes/authRoutes.js'
-import parkingRoutes from './routes/parkingRoutes.js'
-import reservationRoutes from './routes/reservationRoutes.js'
-import analyticsRoutes from './routes/analyticsRoutes.js'
-import alertRoutes from './routes/alertRoutes.js'
-import deviceRoutes from './routes/deviceRoutes.js'
+import authRoutes from './routes/auth.js'
+import parkingRoutes from './routes/parking.js'
+import reservationRoutes from './routes/reservations.js'
+import analyticsRoutes from './routes/analytics.js'
+import alertRoutes from './routes/alerts.js'
+import deviceRoutes from './routes/devices.js'
+import voiceRoutes from './routes/voice.js'
+import { setIO } from './socket.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 
 const app = express()
@@ -20,6 +22,7 @@ const io = new Server(httpServer, {
     origin: config.frontendUrl
   }
 })
+setIO(io)
 
 app.use(
   cors({
@@ -43,6 +46,7 @@ app.use('/api/reservations', reservationRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/alerts', alertRoutes)
 app.use('/api/devices', deviceRoutes)
+app.use('/api/voice', voiceRoutes)
 
 io.on('connection', (socket) => {
   socket.on('join:facility', (facilityId) => socket.join(facilityId))
