@@ -1,7 +1,25 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { prisma } from '../db.js'
+import { validateBody } from '../middleware/validate.js'
+import rateLimit from 'express-rate-limit'
 
 const router = Router()
+const voiceQuerySchema = z.object({
+  text: z.string().trim().min(1).max(500),
+  language: z.enum(['hi', 'en']).default('en')
+})
+const voiceLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many voice queries. Please retry shortly.',
+    code: 429
+  }
+})
 
 function detectIntent(text) {
   const lower = text.toLowerCase()
@@ -16,7 +34,7 @@ function detectIntent(text) {
   return 'UNKNOWN'
 }
 
-router.post('/query', async (req, res, next) => {
+router.post('/query', voiceLimiter, validateBody(voiceQuerySchema), async (req, res, next) => {
   try {
     const { text = '', language = 'en' } = req.body
     const lang = language === 'hi' ? 'hi' : 'en'

@@ -1,11 +1,46 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { prisma } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { getIO } from '../socket.js'
+import { config } from '../config.js'
+import { validateBody, validateQuery } from '../middleware/validate.js'
 
 const router = Router()
+const listQuerySchema = z.object({
+  facilityId: z.string().uuid().optional()
+})
+const heartbeatSchema = z.object({
+  cpuPercent: z.number().min(0).max(100),
+  ramPercent: z.number().min(0).max(100),
+  temperature: z.number().min(-20).max(120),
+  ipAddress: z.string().trim().max(64).optional().default('')
+})
 
-router.get('/', authMiddleware, async (req, res, next) => {
+function verifyDeviceIngestion(req, res, next) {
+  if (!config.deviceApiKey) {
+    if (config.nodeEnv === 'production') {
+      return res.status(503).json({
+        success: false,
+        error: 'Device ingestion key is not configured.',
+        code: 503
+      })
+    }
+    return next()
+  }
+
+  const key = req.header('x-device-key')
+  if (!key || key !== config.deviceApiKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid device API key.',
+      code: 401
+    })
+  }
+  return next()
+}
+
+router.get('/', authMiddleware, validateQuery(listQuerySchema), async (req, res, next) => {
   try {
     const { facilityId } = req.query
 
@@ -22,7 +57,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.put('/:id/heartbeat', async (req, res, next) => {
+router.put('/:id/heartbeat', verifyDeviceIngestion, validateBody(heartbeatSchema), async (req, res, next) => {
   try {
     const { cpuPercent, ramPercent, temperature, ipAddress } = req.body
 

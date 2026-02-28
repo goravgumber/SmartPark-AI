@@ -1,19 +1,24 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { prisma } from '../db.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { authMiddleware, requireRoles } from '../middleware/auth.js'
 import { getIO } from '../socket.js'
+import { validateBody, validateQuery } from '../middleware/validate.js'
 
 const router = Router()
+const listQuerySchema = z.object({
+  facilityId: z.string().uuid().optional(),
+  severity: z.enum(['CRITICAL', 'WARNING', 'INFO']).optional(),
+  resolved: z.enum(['true', 'false']).optional()
+})
+const createAlertSchema = z.object({
+  facilityId: z.string().uuid(),
+  severity: z.enum(['CRITICAL', 'WARNING', 'INFO']),
+  title: z.string().trim().min(3).max(120),
+  description: z.string().trim().min(5).max(500)
+})
 
-function ensureOwnerOrAdmin(req) {
-  if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
-    const error = new Error('Only OWNER or ADMIN can perform this action.')
-    error.statusCode = 403
-    throw error
-  }
-}
-
-router.get('/', authMiddleware, async (req, res, next) => {
+router.get('/', authMiddleware, validateQuery(listQuerySchema), async (req, res, next) => {
   try {
     const { facilityId, severity, resolved } = req.query
 
@@ -34,16 +39,9 @@ router.get('/', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.post('/', authMiddleware, async (req, res, next) => {
+router.post('/', authMiddleware, requireRoles('OWNER', 'ADMIN'), validateBody(createAlertSchema), async (req, res, next) => {
   try {
-    ensureOwnerOrAdmin(req)
-
     const { facilityId, severity, title, description } = req.body
-    if (!facilityId || !severity || !title || !description) {
-      const error = new Error('facilityId, severity, title, and description are required.')
-      error.statusCode = 400
-      throw error
-    }
 
     const alert = await prisma.alert.create({
       data: {
@@ -65,10 +63,8 @@ router.post('/', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.put('/:id/resolve', authMiddleware, async (req, res, next) => {
+router.put('/:id/resolve', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req, res, next) => {
   try {
-    ensureOwnerOrAdmin(req)
-
     const alert = await prisma.alert.update({
       where: { id: req.params.id },
       data: { isResolved: true }

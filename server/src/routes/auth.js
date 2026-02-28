@@ -1,11 +1,25 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { z } from 'zod'
 import { prisma } from '../db.js'
 import { config } from '../config.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { validateBody } from '../middleware/validate.js'
+import { authRateLimit } from '../middleware/rateLimiter.js'
 
 const router = Router()
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().max(120),
+  password: z.string().min(8).max(64)
+})
+
+const loginSchema = z.object({
+  email: z.string().trim().email().max(120),
+  password: z.string().min(1).max(64)
+})
 
 function makeToken(user) {
   return jwt.sign(
@@ -16,19 +30,13 @@ function makeToken(user) {
       name: user.name
     },
     config.jwtSecret,
-    { expiresIn: '7d' }
+    { expiresIn: config.jwtExpiresIn }
   )
 }
 
-router.post('/register', async (req, res, next) => {
+router.post('/register', authRateLimit, validateBody(registerSchema), async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body
-
-    if (!name || !email || !password) {
-      const error = new Error('name, email, and password are required.')
-      error.statusCode = 400
-      throw error
-    }
+    const { name, email, password } = req.body
 
     const normalizedEmail = String(email).toLowerCase().trim()
     const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } })
@@ -38,18 +46,13 @@ router.post('/register', async (req, res, next) => {
       throw error
     }
 
-    const validRoles = ['DRIVER', 'OWNER', 'ADMIN']
-    const safeRole = validRoles.includes(String(role || '').toUpperCase())
-      ? String(role).toUpperCase()
-      : 'DRIVER'
-
     const passwordHash = await bcrypt.hash(password, 10)
     const user = await prisma.user.create({
       data: {
         name,
         email: normalizedEmail,
         passwordHash,
-        role: safeRole
+        role: 'DRIVER'
       },
       select: {
         id: true,
@@ -73,15 +76,9 @@ router.post('/register', async (req, res, next) => {
   }
 })
 
-router.post('/login', async (req, res, next) => {
+router.post('/login', authRateLimit, validateBody(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body
-
-    if (!email || !password) {
-      const error = new Error('email and password are required.')
-      error.statusCode = 400
-      throw error
-    }
 
     const user = await prisma.user.findUnique({
       where: { email: String(email).toLowerCase().trim() }

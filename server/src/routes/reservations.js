@@ -1,21 +1,38 @@
 import { Router } from 'express'
+import crypto from 'crypto'
+import { Prisma } from '@prisma/client'
+import { z } from 'zod'
 import { prisma } from '../db.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { authMiddleware, requireRoles } from '../middleware/auth.js'
 import { getIO } from '../socket.js'
+import { validateBody, validateQuery } from '../middleware/validate.js'
 
 const router = Router()
 
-function ensureOwnerOrAdmin(req) {
-  if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
-    const error = new Error('Only OWNER or ADMIN can perform this action.')
-    error.statusCode = 403
-    throw error
-  }
-}
+const createReservationSchema = z.object({
+  slotId: z.string().trim().uuid(),
+  vehicleNumber: z.string().trim().min(6).max(20),
+  driverName: z.string().trim().min(2).max(80),
+  driverPhone: z.string().trim().min(8).max(20),
+  durationHours: z.number().int().min(1).max(12),
+  paymentMethod: z.enum(['UPI', 'CARD', 'CASH']).default('UPI'),
+  startTime: z.string().datetime()
+})
+
+const reservationQuerySchema = z.object({
+  status: z.enum(['UPCOMING', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
+  page: z
+    .string()
+    .regex(/^\d+$/)
+    .optional(),
+  limit: z
+    .string()
+    .regex(/^\d+$/)
+    .optional()
+})
 
 function generateReservationCode() {
-  const random = Math.floor(1000 + Math.random() * 9000)
-  return `SPK-${random}`
+  return `SPK-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
 }
 
 function calculatePricing(ratePerHour, durationHours) {
@@ -39,22 +56,11 @@ async function emitSlotUpdated(slot) {
   })
 }
 
-router.post('/', authMiddleware, async (req, res, next) => {
+router.post('/', authMiddleware, validateBody(createReservationSchema), async (req, res, next) => {
   try {
     const { slotId, vehicleNumber, driverName, driverPhone, durationHours, paymentMethod, startTime } = req.body
 
-    if (!slotId || !vehicleNumber || !driverName || !driverPhone || !durationHours || !startTime) {
-      const error = new Error('slotId, vehicleNumber, driverName, driverPhone, durationHours, and startTime are required.')
-      error.statusCode = 400
-      throw error
-    }
-
     const duration = Number(durationHours)
-    if (Number.isNaN(duration) || duration <= 0) {
-      const error = new Error('durationHours must be a positive number.')
-      error.statusCode = 400
-      throw error
-    }
 
     const reservationStart = new Date(startTime)
     if (Number.isNaN(reservationStart.getTime())) {
@@ -65,113 +71,101 @@ router.post('/', authMiddleware, async (req, res, next) => {
 
     const reservationEnd = new Date(reservationStart.getTime() + duration * 60 * 60 * 1000)
 
-    const slot = await prisma.parkingSlot.findUnique({
-      where: { id: slotId },
-      include: {
-        zone: {
-          include: {
-            facility: true
-          }
-        }
-      }
-    })
+    let createdReservation = null
+    let pricing = null
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        createdReservation = await prisma.$transaction(
+          async (tx) => {
+            const slot = await tx.parkingSlot.findUnique({
+              where: { id: slotId },
+              include: {
+                zone: {
+                  include: { facility: true }
+                }
+              }
+            })
 
-    if (!slot) {
-      const error = new Error('Slot not found.')
-      error.statusCode = 404
-      throw error
-    }
+            if (!slot) {
+              const error = new Error('Slot not found.')
+              error.statusCode = 404
+              throw error
+            }
 
-    if (slot.status !== 'AVAILABLE') {
-      const error = new Error('Slot is not available for booking.')
-      error.statusCode = 409
-      throw error
-    }
+            if (slot.status !== 'AVAILABLE') {
+              const error = new Error('Slot is not available for booking.')
+              error.statusCode = 409
+              throw error
+            }
 
-    const conflict = await prisma.reservation.findFirst({
-      where: {
-        slotId,
-        status: {
-          in: ['UPCOMING', 'ACTIVE']
-        },
-        startTime: {
-          lt: reservationEnd
-        },
-        endTime: {
-          gt: reservationStart
-        }
-      }
-    })
+            const conflict = await tx.reservation.findFirst({
+              where: {
+                slotId,
+                status: { in: ['UPCOMING', 'ACTIVE'] },
+                startTime: { lt: reservationEnd },
+                endTime: { gt: reservationStart }
+              }
+            })
+            if (conflict) {
+              const error = new Error('Conflicting reservation already exists for this slot and time window.')
+              error.statusCode = 409
+              throw error
+            }
 
-    if (conflict) {
-      const error = new Error('Conflicting reservation already exists for this slot and time window.')
-      error.statusCode = 409
-      throw error
-    }
+            const lockUpdate = await tx.parkingSlot.updateMany({
+              where: { id: slotId, status: 'AVAILABLE' },
+              data: { status: 'RESERVED' }
+            })
+            if (lockUpdate.count !== 1) {
+              const error = new Error('Slot was reserved by another request. Please retry.')
+              error.statusCode = 409
+              throw error
+            }
 
-    const { baseAmount, serviceFee, gst, totalAmount } = calculatePricing(slot.zone.ratePerHour, duration)
-
-    let reservationCode = null
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const code = generateReservationCode()
-      const exists = await prisma.reservation.findUnique({ where: { reservationCode: code } })
-      if (!exists) {
-        reservationCode = code
+            pricing = calculatePricing(slot.zone.ratePerHour, duration)
+            const reservationCode = generateReservationCode()
+            return tx.reservation.create({
+              data: {
+                reservationCode,
+                slotId,
+                userId: req.user.id,
+                vehicleNumber,
+                driverName,
+                driverPhone,
+                durationHours: duration,
+                baseAmount: pricing.baseAmount,
+                totalAmount: pricing.totalAmount,
+                paymentMethod: paymentMethod || 'UPI',
+                startTime: reservationStart,
+                endTime: reservationEnd,
+                status: 'UPCOMING'
+              },
+              include: {
+                slot: {
+                  include: {
+                    zone: { include: { facility: true } }
+                  }
+                },
+                user: {
+                  select: { id: true, name: true, email: true, role: true }
+                }
+              }
+            })
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+        )
         break
+      } catch (error) {
+        const shouldRetry = (error?.code === 'P2034' || error?.code === 'P2002') && attempt < 2
+        if (shouldRetry) continue
+        throw error
       }
     }
-
-    if (!reservationCode) {
-      const error = new Error('Could not generate reservation code. Please try again.')
+    if (!createdReservation || !pricing) {
+      const error = new Error('Unable to create reservation at this time.')
       error.statusCode = 500
       throw error
     }
-
-    const createdReservation = await prisma.$transaction(async (tx) => {
-      const reservation = await tx.reservation.create({
-        data: {
-          reservationCode,
-          slotId,
-          userId: req.user.id,
-          vehicleNumber,
-          driverName,
-          driverPhone,
-          durationHours: duration,
-          baseAmount,
-          totalAmount,
-          paymentMethod: paymentMethod || 'UPI',
-          startTime: reservationStart,
-          endTime: reservationEnd,
-          status: 'UPCOMING'
-        },
-        include: {
-          slot: {
-            include: {
-              zone: {
-                include: {
-                  facility: true
-                }
-              }
-            }
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true
-            }
-          }
-        }
-      })
-
-      await tx.parkingSlot.update({
-        where: { id: slotId },
-        data: { status: 'RESERVED' }
-      })
-
-      return reservation
-    })
 
     await emitSlotUpdated({
       id: createdReservation.slot.id,
@@ -185,10 +179,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
       data: {
         ...createdReservation,
         pricing: {
-          baseAmount,
-          serviceFee,
-          gst,
-          totalAmount
+          ...pricing
         }
       }
     })
@@ -197,7 +188,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.get('/', authMiddleware, async (req, res, next) => {
+router.get('/', authMiddleware, validateQuery(reservationQuerySchema), async (req, res, next) => {
   try {
     const status = req.query.status ? String(req.query.status).toUpperCase() : null
     const page = Math.max(Number(req.query.page) || 1, 1)
@@ -362,14 +353,17 @@ router.put('/:id/cancel', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.post('/:id/checkin', authMiddleware, async (req, res, next) => {
+router.post('/:id/checkin', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req, res, next) => {
   try {
-    ensureOwnerOrAdmin(req)
-
     const reservation = await prisma.reservation.findUnique({ where: { id: req.params.id } })
     if (!reservation) {
       const error = new Error('Reservation not found.')
       error.statusCode = 404
+      throw error
+    }
+    if (!['UPCOMING', 'ACTIVE'].includes(reservation.status)) {
+      const error = new Error('Only UPCOMING reservations can be checked in.')
+      error.statusCode = 409
       throw error
     }
 
@@ -411,14 +405,17 @@ router.post('/:id/checkin', authMiddleware, async (req, res, next) => {
   }
 })
 
-router.post('/:id/checkout', authMiddleware, async (req, res, next) => {
+router.post('/:id/checkout', authMiddleware, requireRoles('OWNER', 'ADMIN'), async (req, res, next) => {
   try {
-    ensureOwnerOrAdmin(req)
-
     const reservation = await prisma.reservation.findUnique({ where: { id: req.params.id } })
     if (!reservation) {
       const error = new Error('Reservation not found.')
       error.statusCode = 404
+      throw error
+    }
+    if (reservation.status !== 'ACTIVE') {
+      const error = new Error('Only ACTIVE reservations can be checked out.')
+      error.statusCode = 409
       throw error
     }
 

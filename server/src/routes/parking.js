@@ -1,13 +1,28 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { prisma } from '../db.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { authMiddleware, requireRoles } from '../middleware/auth.js'
 import { getIO } from '../socket.js'
+import { validateBody, validateQuery } from '../middleware/validate.js'
 
 const router = Router()
 
 const summaryCache = new Map()
 const SUMMARY_TTL_MS = 30 * 1000
 const VALID_SLOT_STATUSES = ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'DISABLED']
+const ALLOWED_SLOT_TRANSITIONS = {
+  AVAILABLE: ['RESERVED', 'OCCUPIED', 'DISABLED'],
+  RESERVED: ['AVAILABLE', 'OCCUPIED', 'DISABLED'],
+  OCCUPIED: ['AVAILABLE', 'DISABLED'],
+  DISABLED: ['AVAILABLE']
+}
+const slotStatusSchema = z.object({
+  status: z.enum(['AVAILABLE', 'OCCUPIED', 'RESERVED', 'DISABLED'])
+})
+const slotFilterSchema = z.object({
+  zone: z.string().trim().max(16).optional(),
+  status: z.enum(['AVAILABLE', 'OCCUPIED', 'RESERVED', 'DISABLED']).optional()
+})
 
 function buildFacilitySummaryFromSlots(slots) {
   const total = slots.length
@@ -127,7 +142,7 @@ router.get('/facilities/:id', async (req, res, next) => {
   }
 })
 
-router.get('/facilities/:id/slots', async (req, res, next) => {
+router.get('/facilities/:id/slots', validateQuery(slotFilterSchema), async (req, res, next) => {
   try {
     const { zone, status } = req.query
     const facilityId = req.params.id
@@ -201,7 +216,7 @@ router.get('/slots/:id', async (req, res, next) => {
   }
 })
 
-router.put('/slots/:id/status', authMiddleware, async (req, res, next) => {
+router.put('/slots/:id/status', authMiddleware, requireRoles('OWNER', 'ADMIN'), validateBody(slotStatusSchema), async (req, res, next) => {
   try {
     const { status } = req.body
     const normalizedStatus = String(status || '').toUpperCase()
@@ -209,6 +224,28 @@ router.put('/slots/:id/status', authMiddleware, async (req, res, next) => {
     if (!VALID_SLOT_STATUSES.includes(normalizedStatus)) {
       const error = new Error('Invalid slot status provided.')
       error.statusCode = 400
+      throw error
+    }
+
+    const existingSlot = await prisma.parkingSlot.findUnique({
+      where: { id: req.params.id },
+      include: {
+        zone: {
+          include: {
+            facility: true
+          }
+        }
+      }
+    })
+    if (!existingSlot) {
+      const error = new Error('Parking slot not found.')
+      error.statusCode = 404
+      throw error
+    }
+    const allowedNext = ALLOWED_SLOT_TRANSITIONS[existingSlot.status] || []
+    if (!allowedNext.includes(normalizedStatus)) {
+      const error = new Error(`Invalid slot transition from ${existingSlot.status} to ${normalizedStatus}.`)
+      error.statusCode = 409
       throw error
     }
 
