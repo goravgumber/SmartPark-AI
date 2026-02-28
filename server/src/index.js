@@ -97,8 +97,10 @@ io.on('connection', (socket) => {
 app.use(notFoundHandler)
 app.use(errorHandler)
 
-httpServer.listen(config.port, () => {
-  console.log(`SmartPark server listening on port ${config.port}`)
+const PORT = process.env.PORT || 4000
+
+httpServer.listen(PORT, () => {
+  console.log(`SmartPark server listening on port ${PORT}`)
 })
 
 export { io }

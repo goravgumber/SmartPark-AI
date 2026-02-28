@@ -319,14 +319,11 @@ async function main() {
 }
 
 main()
-  .catch((error) => {
-    if (error?.code === 'P1010') {
-      console.error('❌ Seed failed: Database access denied for current user (P1010).')
-      process.exit(1)
-    }
-    console.error('❌ Seed failed:', error)
-    process.exit(1)
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect()
+  })
+  .catch(async (error) => {
+    console.error('❌ Seed failed:', error)
+    await prisma.$disconnect()
+    throw error
   })
