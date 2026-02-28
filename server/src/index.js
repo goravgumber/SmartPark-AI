@@ -1,7 +1,9 @@
 import 'dotenv/config'
 import cors from 'cors'
 import express from 'express'
+import helmet from 'helmet'
 import http from 'http'
+import jwt from 'jsonwebtoken'
 import { Server } from 'socket.io'
 import { config } from './config.js'
 import authRoutes from './routes/auth.js'
@@ -12,25 +14,38 @@ import alertRoutes from './routes/alerts.js'
 import deviceRoutes from './routes/devices.js'
 import voiceRoutes from './routes/voice.js'
 import { setIO } from './socket.js'
+import { generalRateLimit } from './middleware/rateLimiter.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import { prisma } from './db.js'
 
 const app = express()
+if (config.trustProxy) {
+  app.set('trust proxy', 1)
+}
+
 const httpServer = http.createServer(app)
 
 const io = new Server(httpServer, {
   cors: {
     origin: config.frontendUrl
-  }
+  },
+  maxHttpBufferSize: 1e5
 })
 setIO(io)
 
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+)
 app.use(
   cors({
     origin: config.frontendUrl,
     credentials: true
   })
 )
-app.use(express.json())
+app.use(generalRateLimit)
+app.use(express.json({ limit: '50kb' }))
 
 app.get('/health', (req, res) => {
   res.json({
@@ -48,8 +63,34 @@ app.use('/api/alerts', alertRoutes)
 app.use('/api/devices', deviceRoutes)
 app.use('/api/voice', voiceRoutes)
 
+io.use((socket, next) => {
+  try {
+    const authToken = socket.handshake?.auth?.token
+    const headerToken = socket.handshake?.headers?.authorization?.replace('Bearer ', '')
+    const token = authToken || headerToken
+    if (!token) {
+      return next(new Error('Unauthorized socket connection.'))
+    }
+    const decoded = jwt.verify(token, config.jwtSecret)
+    socket.data.user = decoded
+    return next()
+  } catch (_error) {
+    return next(new Error('Unauthorized socket connection.'))
+  }
+})
+
 io.on('connection', (socket) => {
-  socket.on('join:facility', (facilityId) => socket.join(facilityId))
+  socket.on('join:facility', async (facilityId) => {
+    try {
+      const userId = socket.data?.user?.id
+      if (!userId || !facilityId) return
+      const facility = await prisma.facility.findUnique({ where: { id: String(facilityId) }, select: { id: true } })
+      if (!facility) return
+      socket.join(facility.id)
+    } catch (_error) {
+      // Do not expose socket errors to clients.
+    }
+  })
   console.log('Client connected:', socket.id)
 })
 

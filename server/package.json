@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"
@@ -17,10 +18,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.5.0",
     "pg": "^8.16.3",
-    "socket.io": "^4.7.4"
+    "socket.io": "^4.7.4",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
