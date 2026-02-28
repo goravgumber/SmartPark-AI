@@ -2,6 +2,9 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/auth'
 import LoginPage from './pages/LoginPage'
 import AppShell from './components/layout/AppShell'
+import MapOverviewPage from './pages/MapOverviewPage'
+import AnalyticsPage from './pages/AnalyticsPage'
+import EnvironmentPage from './pages/EnvironmentPage'
 
 function ProtectedRoute() {
   const token = localStorage.getItem('smartpark_token')
@@ -45,9 +48,9 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<AppShell />}>
             <Route index element={<Navigate to="map" replace />} />
-            <Route path="map" element={<PlaceholderPage title="Map Overview" />} />
-            <Route path="analytics" element={<PlaceholderPage title="Analytics" />} />
-            <Route path="environment" element={<PlaceholderPage title="Environment" />} />
+            <Route path="map" element={<MapOverviewPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="environment" element={<EnvironmentPage />} />
             <Route path="reservations" element={<PlaceholderPage title="Reservations" />} />
             <Route path="revenue" element={<PlaceholderPage title="Revenue" />} />
             <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
