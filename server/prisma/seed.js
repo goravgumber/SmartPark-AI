@@ -323,6 +323,12 @@ main()
     await prisma.$disconnect()
   })
   .catch(async (error) => {
+    if (error?.code === 'P1010') {
+      console.error('⚠️ Seed skipped: database access denied during deploy startup (P1010).')
+      console.error('   Ensure Render DATABASE_URL is attached to the same Postgres instance and SSL is enabled.')
+      await prisma.$disconnect()
+      return
+    }
     console.error('❌ Seed failed:', error)
     await prisma.$disconnect()
     throw error
