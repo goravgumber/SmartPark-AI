@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+
 export function notFoundHandler(req, res) {
   res.status(404).json({
     success: false,
@@ -7,12 +9,15 @@ export function notFoundHandler(req, res) {
 }
 
 export function errorHandler(error, req, res, next) {
-  console.error(error)
+  const requestId = crypto.randomUUID()
+  console.error(`[${requestId}]`, error)
 
   const statusCode = error.statusCode || 500
+  const safeMessage = statusCode >= 500 ? 'Internal Server Error' : error.message || 'Request failed'
   res.status(statusCode).json({
     success: false,
-    error: error.message || 'Internal Server Error',
-    code: statusCode
+    error: safeMessage,
+    code: statusCode,
+    requestId
   })
 }
