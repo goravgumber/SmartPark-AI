@@ -4,7 +4,7 @@
 
 Position SmartPark AI as an AMD-aligned edge-to-cloud smart city platform that runs as a prototype now and scales cleanly to production.
 
-## 1. AMD Architecture Mapping
+## 1. AMD Architecture Mapping:
 
 | SmartPark Component | AMD Technology | Practical Role |
 |---|---|---|
@@ -15,7 +15,7 @@ Position SmartPark AI as an AMD-aligned edge-to-cloud smart city platform that r
 | ML runtime | ROCm ecosystem | Open AI stack for model serving/training on AMD GPUs |
 | Device/control tier model | AMD Adaptive SoCs | Edge signal pre-processing and control-plane readiness |
 
-## 2. Edge -> Cloud -> AI Pipeline
+## 2. Edge -> Cloud -> AI Pipeline:
 
 ```mermaid
 flowchart TD
@@ -34,7 +34,7 @@ flowchart TD
   CLOUD --> UI
 ```
 
-## 3. Why AMD Is Technically Beneficial
+## 3. Why AMD Is Technically Beneficial:
 
 ### Backend and Realtime (EPYC)
 
@@ -54,7 +54,7 @@ flowchart TD
 - ROCm enables standard PyTorch-based workflows with AMD acceleration.
 - Keeps inference decoupled from transactional backend for stable API latency.
 
-## 4. Smart City Deployment Model
+## 4. Smart City Deployment Model:
 
 ```mermaid
 flowchart LR
@@ -78,7 +78,7 @@ flowchart LR
   C --> F[Ops Dashboard + Mobile Apps]
 ```
 
-## 5. Implementation Path for SmartPark AI
+## 5. Implementation Path for SmartPark AI:
 
 1. **Current prototype**: Render deployment, realtime dashboard, simulation routes.
 2. **Edge enablement**: deploy MQTT forwarder and payload signer on Ryzen edge node.
