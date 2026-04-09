@@ -6,14 +6,12 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "start:render": "sh -c 'npx prisma db push && (node prisma/seed.js || echo \"Seed step failed/skipped; continuing startup\") && node src/index.js'",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^5.0.0",
     "@prisma/client": "^5.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -29,6 +27,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "prisma": "^7.4.2"
+    "prisma": "^5.0.0"
   }
 }
