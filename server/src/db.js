@@ -1,63 +1,37 @@
 import 'dotenv/config'
-import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis
-
-// Debug log (VERY IMPORTANT for Render)
+// ENV DEBUG
 console.log("ENV CHECK:")
 console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL)
 
-const rawConnectionString = process.env.DATABASE_URL
-
-// DO NOT crash app — just log error
-if (!rawConnectionString) {
-  console.error("DATABASE_URL is missing. Please check Render environment variables.")
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is missing. Check Render environment variables.")
 }
 
-// Build connection config safely
-function buildPoolConfig(connectionString) {
-  try {
-    const parsed = new URL(connectionString)
-    const isRenderHost = parsed.hostname.endsWith('.render.com')
-    const sslMode = parsed.searchParams.get('sslmode')
-    const requiresSsl = isRenderHost && sslMode !== 'disable'
+// Use global to prevent multiple instances (important in dev + serverless)
+const globalForPrisma = globalThis
 
-    const poolConfig = { connectionString }
-
-    if (requiresSsl) {
-      poolConfig.ssl = { rejectUnauthorized: false }
-    }
-
-    return poolConfig
-  } catch (err) {
-    console.error("Error parsing DATABASE_URL:", err.message)
-    return { connectionString }
-  }
-}
+let prisma
 
 if (!globalForPrisma.prisma) {
-  try {
-    const adapter = rawConnectionString
-      ? new PrismaPg(buildPoolConfig(rawConnectionString))
-      : undefined
+  prisma = new PrismaClient({
+    log: ['error', 'warn'] 
+  })
 
-    globalForPrisma.prisma = new PrismaClient(
-      adapter ? { adapter } : {}
-    )
-
-    console.log("Prisma Client Initialized")
-  } catch (err) {
-    console.error("Prisma initialization failed:", err)
-  }
+  globalForPrisma.prisma = prisma
+  console.log("Prisma Client Initialized (native)")
+} else {
+  prisma = globalForPrisma.prisma
 }
 
-export const prisma = globalForPrisma.prisma
-
-prisma?.$connect()
+// Safe DB connection (non-crashing)
+prisma.$connect()
   .then(() => {
     console.log("Database connected successfully")
   })
   .catch((err) => {
-    console.error("❌ Database connection failed:", err.message)
+    console.error("Database connection failed:", err.message)
   })
+
+export { prisma }
