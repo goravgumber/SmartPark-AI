@@ -10,8 +10,7 @@ let prisma
 
 if (!globalForPrisma.prisma) {
   prisma = new PrismaClient({
-    datasourceUrl: process.env.DATABASE_URL,
-    log: ['error', 'warn']
+    log: ['error']
   })
   globalForPrisma.prisma = prisma
   console.log("Prisma Client Initialized")
@@ -20,11 +19,7 @@ if (!globalForPrisma.prisma) {
 }
 
 prisma.$connect()
-  .then(() => {
-    console.log("Database connected successfully")
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err.message)
-  })
+  .then(() => console.log("Database connected successfully"))
+  .catch((err) => console.error("DB Error:", err))
 
 export { prisma }
