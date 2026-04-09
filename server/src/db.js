@@ -10,7 +10,9 @@ let prisma
 
 if (!globalForPrisma.prisma) {
   prisma = new PrismaClient({
-    log: ['error']
+    adapter: {
+      url: process.env.DATABASE_URL
+    }
   })
   globalForPrisma.prisma = prisma
   console.log("Prisma Client Initialized")
