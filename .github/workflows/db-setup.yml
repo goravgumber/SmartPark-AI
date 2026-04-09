@@ -1,0 +1,35 @@
+name: Database Setup
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./server
+
+      - name: Run Prisma DB Push
+        run: npx prisma db push
+        working-directory: ./server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run Seed Script
+        run: node prisma/seed.js
+        working-directory: ./server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
