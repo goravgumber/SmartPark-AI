@@ -48,29 +48,26 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
   return (
     <>
-      {mobileOpen ? <button type="button" className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onClose} /> : null}
+      {mobileOpen ? <button type="button" className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={onClose} /> : null}
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-brand-cyan/20 bg-[#071327]/90 p-4 backdrop-blur-xl transition-transform duration-300 md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r bg-white p-4 transition-transform duration-300 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         <div className="glass-card mb-4 px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-brand-cyan/40 bg-brand-cyan/10 font-orbitron text-brand-cyan">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 font-medium text-gray-800">
               P
             </div>
             <div>
-              <p className="font-orbitron text-sm text-brand-cyan">SmartPark AI</p>
-              <p className="text-xs text-slate-400">Mission Control</p>
+              <p className="text-sm text-gray-800 font-semibold">SmartPark</p>
+              <p className="text-xs text-gray-500">Mission Control</p>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-300">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-70" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-green" />
-            </span>
-            <span className="font-medium text-brand-green">LIVE</span>
-            <span className="text-slate-400">System Operational</span>
+          <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-green-400" />
+            <span className="font-medium text-green-600">LIVE</span>
+            <span className="text-gray-500">System Operational</span>
           </div>
         </div>
 
@@ -83,11 +80,11 @@ export default function Sidebar({ mobileOpen, onClose }) {
                 to={item.to}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `group flex items-center justify-between rounded-r-lg border-l-2 px-3 py-2.5 transition-all duration-200 ${
-                    isActive
-                      ? 'border-brand-cyan bg-brand-cyan/10 text-brand-cyan'
-                      : 'border-transparent text-slate-300 hover:bg-brand-cyan/5 hover:text-white'
-                  }`
+                    `group flex items-center justify-between rounded-r-lg border-l-2 px-3 py-2.5 transition-all duration-200 ${
+                      isActive
+                        ? 'border-gray-300 bg-gray-50 text-gray-800'
+                        : 'border-transparent text-gray-700 hover:bg-gray-50'
+                    }`
                 }
               >
                 <span className="flex items-center gap-2.5">
@@ -111,30 +108,30 @@ export default function Sidebar({ mobileOpen, onClose }) {
         <div className="space-y-3 pt-4">
           <div className="glass-card px-3 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-violet font-mono text-xs font-bold text-dark-base">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 font-mono text-xs font-bold text-gray-800">
                 {initials || 'SP'}
               </div>
               <div>
-                <p className="text-sm font-medium text-white">{user?.name || 'Mission User'}</p>
-                <p className="text-[11px] uppercase tracking-wide text-brand-cyan">{user?.role || 'DRIVER'}</p>
+                <p className="text-sm font-medium text-gray-800">{user?.name || 'Mission User'}</p>
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">{user?.role || 'DRIVER'}</p>
               </div>
             </div>
           </div>
 
           <div className="glass-card px-3 py-3 text-xs">
-            <p className="mb-2 text-slate-300">System Status</p>
-            <div className="space-y-1.5 text-slate-300">
+            <p className="mb-2 text-gray-600">System Status</p>
+            <div className="space-y-1.5 text-gray-600">
               <div className="flex items-center justify-between">
                 <span>MQTT</span>
-                <span className="text-brand-green">🟢 Connected</span>
+                <span className="text-green-600">🟢 Connected</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Database</span>
-                <span className="text-brand-green">🟢 Healthy</span>
+                <span className="text-green-600">🟢 Healthy</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Devices</span>
-                <span className="text-brand-amber">🟡 3/4 Online</span>
+                <span className="text-yellow-600">🟡 3/4 Online</span>
               </div>
             </div>
           </div>
@@ -142,7 +139,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-brand-red/40 bg-brand-red/5 px-3 py-2 text-sm text-brand-red transition hover:bg-brand-red/15"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border bg-red-50 px-3 py-2 text-sm text-red-600 transition hover:bg-red-100"
           >
             <LogOut size={16} />
             Logout

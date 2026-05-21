@@ -170,25 +170,24 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
   }
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 h-16 border-b border-brand-cyan/20 bg-[#060f20]/90 backdrop-blur-xl md:left-[260px]">
+    <header className="fixed left-0 right-0 top-0 z-40 h-16 border-b bg-white/80 md:left-[260px]">
       <div className="flex h-full items-center justify-between gap-4 px-4 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={onMenuToggle}
-            className="rounded-lg border border-brand-cyan/30 p-2 text-brand-cyan md:hidden"
+            className="rounded-lg border p-2 text-gray-700 md:hidden"
           >
             <Menu size={18} />
           </button>
           <div className="min-w-0">
-            <p className="truncate font-orbitron text-lg text-brand-cyan">{title}</p>
-            <p className="truncate text-xs text-slate-400">{breadcrumb}</p>
+            <p className="truncate text-lg font-medium text-gray-800">{title}</p>
+            <p className="truncate text-xs text-gray-500">{breadcrumb}</p>
           </div>
         </div>
-
         <div ref={searchRef} className="relative hidden w-full max-w-xl md:block">
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 rounded-xl border border-brand-cyan/20 bg-dark-surface/70 px-3 py-2">
-            <Search size={16} className="text-brand-cyan" />
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+            <Search size={16} className="text-gray-500" />
             <input
               type="text"
               value={searchQuery}
@@ -197,24 +196,24 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
               }}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search slots, zones, drivers..."
-              className="w-full bg-transparent text-sm text-slate-300 placeholder:text-slate-500 outline-none"
+              className="w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none"
             />
           </form>
 
           {showSearchResults ? (
-            <div className="glass-card absolute left-0 right-0 top-12 z-[70] max-h-80 overflow-y-auto border border-brand-cyan/25 p-2">
-              {searchLoading ? <p className="px-2 py-2 text-xs text-slate-400">Searching...</p> : null}
-              {!searchLoading && searchResults.length === 0 ? <p className="px-2 py-2 text-xs text-slate-400">No results found.</p> : null}
+            <div className="glass-card absolute left-0 right-0 top-12 z-[70] max-h-80 overflow-y-auto border p-2">
+              {searchLoading ? <p className="px-2 py-2 text-xs text-gray-500">Searching...</p> : null}
+              {!searchLoading && searchResults.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No results found.</p> : null}
               {!searchLoading
                 ? searchResults.map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => selectSearchResult(item)}
-                      className="block w-full rounded-lg px-2 py-2 text-left hover:bg-brand-cyan/10"
+                      className="block w-full rounded-lg px-2 py-2 text-left hover:bg-gray-50"
                     >
-                      <p className="text-sm text-white">{item.title}</p>
-                      <p className="text-xs text-slate-400">{item.subtitle}</p>
+                      <p className="text-sm text-gray-800">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.subtitle}</p>
                     </button>
                   ))
                 : null}
@@ -222,10 +221,10 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
           <button
             type="button"
-            className="hidden items-center gap-1 rounded-lg border border-brand-cyan/25 bg-brand-cyan/5 px-2.5 py-1.5 text-xs text-slate-200 md:flex"
+              className="hidden items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs text-gray-700 md:flex"
           >
             <span>📍 Mumbai, Maharashtra</span>
             <ChevronDown size={14} className="text-brand-cyan" />
@@ -238,22 +237,22 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
                 setShowAlerts((v) => !v)
                 setShowUserMenu(false)
               }}
-              className="relative rounded-lg border border-brand-cyan/20 bg-dark-surface/80 p-2 text-slate-200 transition hover:text-brand-cyan"
+              className="relative rounded-lg border bg-white p-2 text-gray-700 transition"
             >
               <Bell size={18} />
-              <span className="absolute -right-1 -top-1 rounded-full bg-brand-red px-1.5 text-[10px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
                 {unreadCount}
               </span>
             </button>
 
             {showAlerts ? (
-              <div className="glass-card absolute right-0 mt-2 w-72 border border-brand-cyan/20 p-3">
-                <p className="mb-2 text-sm font-semibold text-brand-cyan">Recent Alerts</p>
+              <div className="glass-card absolute right-0 mt-2 w-72 border p-3">
+                <p className="mb-2 text-sm font-semibold text-gray-800">Recent Alerts</p>
                 <div className="space-y-2">
                   {recentAlerts.slice(0, 3).map((alert) => (
-                    <div key={alert.id} className="rounded-lg border border-dark-border bg-dark-surface/70 px-2.5 py-2">
-                      <p className="text-xs font-medium text-white">{alert.title}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{alert.time}</p>
+                    <div key={alert.id} className="rounded-lg border px-2.5 py-2 bg-white">
+                      <p className="text-xs font-medium text-gray-800">{alert.title}</p>
+                      <p className="mt-0.5 text-[11px] text-gray-500">{alert.time}</p>
                     </div>
                   ))}
                 </div>
@@ -261,33 +260,33 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
             ) : null}
           </div>
 
-          <div className="relative">
+            <div className="relative">
             <button
               type="button"
               onClick={() => {
                 setShowUserMenu((v) => !v)
                 setShowAlerts(false)
               }}
-              className="flex items-center gap-2 rounded-lg border border-brand-cyan/20 bg-dark-surface/80 px-2 py-1.5"
+              className="flex items-center gap-2 rounded-lg border bg-white px-2 py-1.5"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-violet font-mono text-[11px] font-bold text-dark-base">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-bold text-gray-800">
                 {initials || 'SP'}
               </span>
-              <ChevronDown size={14} className="hidden text-brand-cyan md:block" />
+              <ChevronDown size={14} className="hidden text-gray-500 md:block" />
             </button>
 
             {showUserMenu ? (
-              <div className="glass-card absolute right-0 mt-2 w-40 border border-brand-cyan/20 py-1.5 text-sm">
-                <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-brand-cyan/10">
+              <div className="glass-card absolute right-0 mt-2 w-40 border py-1.5 text-sm">
+                <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-gray-50">
                   Profile
                 </button>
-                <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-brand-cyan/10">
+                <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-gray-50">
                   Settings
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="block w-full px-3 py-1.5 text-left text-brand-red hover:bg-brand-red/10"
+                  className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50"
                 >
                   Logout
                 </button>
@@ -295,7 +294,7 @@ export default function Header({ title, breadcrumb, unreadCount = 0, onMenuToggl
             ) : null}
           </div>
 
-          <div className="hidden rounded-lg border border-brand-cyan/20 bg-dark-surface/80 px-2.5 py-1.5 font-mono text-sm text-brand-green md:block">
+          <div className="hidden rounded-lg border bg-white px-2.5 py-1.5 font-mono text-sm text-gray-700 md:block">
             {clock.toLocaleTimeString('en-US', { hour12: false })}
           </div>
         </div>

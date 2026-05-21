@@ -38,9 +38,23 @@
 }
 
 @layer base {
+  :root{
+    --sp-bg: #f7fafc;
+    --sp-text: #0f172a;
+    --sp-accent: #2b6cb0;
+    --sp-muted: #64748b;
+    --sp-card: #ffffff;
+    --sp-border: #e6eef7;
+    --sp-accent-2: #7b61ff;
+    --sp-green: #16a34a;
+    --sp-red: #dc2626;
+    --sp-amber: #d97706;
+  }
+
   body {
-    @apply bg-dark-base text-white font-sans;
-    font-family: 'Inter', sans-serif;
+    background: var(--sp-bg);
+    color: var(--sp-text);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   }
 
   ::-webkit-scrollbar {
@@ -52,52 +66,79 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-brand-cyan/30 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-brand-cyan/60;
+    background: rgba(15,23,42,0.12);
+    border-radius: 9999px;
   }
 }
 
 @layer components {
   .glass-card {
-    background: rgba(10, 22, 40, 0.8);
-    border: 1px solid rgba(0, 229, 255, 0.15);
-    backdrop-filter: blur(12px);
-    border-radius: 16px;
-  }
-
-  .glow-cyan {
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
-  }
-
-  .glow-green {
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-  }
-
-  .glow-red {
-    box-shadow: 0 0 20px rgba(255, 61, 87, 0.3);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, #00E5FF, #7B61FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background: var(--sp-card);
+    border: 1px solid var(--sp-border);
+    border-radius: 12px;
+    padding: 1rem;
   }
 
   .panel-frame {
-    @apply glass-card rounded-2xl border border-brand-cyan/20 p-6;
-    box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+    background: var(--sp-card);
+    border: 1px solid var(--sp-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.06);
   }
 
   .page-title {
-    @apply font-orbitron text-3xl text-brand-cyan;
+    color: var(--sp-accent);
+    font-weight: 600;
   }
 
   .slot-flash {
     animation: slotFlash 0.33s ease-in-out;
   }
+
+  /* Compatibility mappings for original dark theme utility classes */
+  .bg-dark-base { background: var(--sp-bg) !important; }
+  .bg-dark-surface { background: var(--sp-card) !important; }
+  .bg-dark-border { background: var(--sp-border) !important; }
+  .border-dark-border { border-color: var(--sp-border) !important; }
+  .text-slate-300 { color: var(--sp-muted) !important; }
+  .text-slate-400 { color: rgba(100,116,139,0.9) !important; }
+  .text-slate-500 { color: rgba(100,116,139,0.8) !important; }
+  .text-slate-200 { color: rgba(100,116,139,0.7) !important; }
+  .text-white { color: var(--sp-text) !important; }
+
+  /* Simple helpers for brand-like accents used across the app */
+  .text-brand-cyan { color: var(--sp-accent) !important; }
+  .bg-brand-cyan\/10 { background: color-mix(in srgb, var(--sp-accent) 10%, transparent) !important; }
+  .border-brand-cyan\/20 { border-color: color-mix(in srgb, var(--sp-accent) 20%, transparent) !important; }
+  .from-brand-cyan { --tw-gradient-from: var(--sp-accent); }
+  .to-brand-violet { --tw-gradient-to: var(--sp-accent-2); }
+
+  /* Common brand color helpers mapped to neutral/minimal tones */
+  .text-brand-green { color: var(--sp-green) !important; }
+  .text-brand-red { color: var(--sp-red) !important; }
+  .text-brand-amber { color: var(--sp-amber) !important; }
+  .text-brand-violet { color: var(--sp-accent-2) !important; }
+
+  .bg-brand-green\/10 { background: color-mix(in srgb, var(--sp-green) 10%, transparent) !important; }
+  .border-brand-green\/40 { border-color: color-mix(in srgb, var(--sp-green) 40%, transparent) !important; }
+  .bg-brand-red\/10 { background: color-mix(in srgb, var(--sp-red) 10%, transparent) !important; }
+  .border-brand-red\/40 { border-color: color-mix(in srgb, var(--sp-red) 40%, transparent) !important; }
+  .bg-brand-amber\/10 { background: color-mix(in srgb, var(--sp-amber) 10%, transparent) !important; }
+  .border-brand-amber\/40 { border-color: color-mix(in srgb, var(--sp-amber) 40%, transparent) !important; }
+  .bg-brand-violet\/20 { background: color-mix(in srgb, var(--sp-accent-2) 20%, transparent) !important; }
+
+  /* gradient helper commonly used */
+  .bg-gradient-to-r.from-brand-cyan.to-brand-violet {
+    background: linear-gradient(90deg, var(--sp-accent), var(--sp-accent-2));
+    color: white;
+  }
+
+  /* small helper mappings */
+  .text-brand-amber { color: var(--sp-amber) !important; }
+  .bg-brand-amber\/20 { background: color-mix(in srgb, var(--sp-amber) 20%, transparent) !important; }
+
+  .animate-pulse-glow { opacity: 0.95; }
 
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;

@@ -32,7 +32,7 @@ export default function AppShell() {
   ]
 
   return (
-    <div className="min-h-screen bg-dark-base text-white">
+    <div className="min-h-screen">
       <div className="flex h-screen">
         <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
@@ -45,7 +45,7 @@ export default function AppShell() {
             onMenuToggle={() => setMobileOpen((value) => !value)}
           />
 
-          <main className="flex-1 overflow-y-auto pt-16 md:pl-[260px]">
+          <main className="flex-1 overflow-y-auto pt-16 md:pl-64">
             <div className="min-h-[calc(100vh-64px)] p-4 md:p-6">
               <Outlet />
             </div>
